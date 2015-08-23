@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>俄罗斯方块</title>
+	<style type="text/css">
+		#wrap {
+			margin: 0;
+			padding: 2px;
+			margin: 0 auto;
+			margin-top: 30px;
+			list-style: none;
+			background-color: #000000;
+			overflow: hidden;
+		}
+		#wrap li {
+			width: 25px;
+			height: 25px;
+			background-color: #0e0e0e;
+			border: 1px solid #000;
+			float: left;
+			border-radius: 3px;
+		}
+		div {
+			width: 150px;
+			height: 200px;
+			background-color: #000;
+			position: absolute;
+			top: 30px;
+			right: 300px;
+			color: #fff;
+			text-align: center;
+			padding-top: 20px;
+		}
+		div span {
+			display: block;
+			width: 100%;
+			height: 30px;
+			line-height: 30px;
+			
+		}
+		#defen,#time {
+			margin-bottom: 15px;
+		}
+		div button {
+			font-size: 14px;
+			width: 50px;
+			height: 25px;
+			background-color: #eee;
+			border: none;
+			border-radius: 3px;
+		}
+	</style>
+	<script type="text/javascript">
+		var oul;
+		var lists;
+		var column=15; //行数
+		var line=19; //列数
+		var all=[]; //所有的方块
+		var x=Math.floor((column-4)/2); //x轴参照点
+		var y=-1; //y轴参照点
+		var index;	//当前形状变换的序列
+		var nowblock; //当前对象
+		var nowpieces; //当前形状
+		var timer;
+		var color; //当前形状颜色
+		var _i; //当前形状序列
+		var allpie=[]; //所有的形状
+		var defeng=0;
+		var colors=["#33B5E5","#0099CC","#AA66CC","#9933CC","#99CC00","#669900","#FFBB33","#FF8800","#FF4444","#CC0000"];
+		var starttime;
+		var nowtime;
+		var gametime;
+
+		window.onload=function(){
+			oul=document.getElementById("wrap");
+			oul.style.width=column*27+"px";
+			for(var i=0;i<column*line;i++){
+				var li=document.createElement("li");
+				oul.appendChild(li);
+				all[i]=0;
+			}
+			lists=oul.getElementsByTagName("li");
+
+			color=colors[random(colors.length)];
+			nowblock=suiji(x,y,color);
+			nowpieces=nowblock.change(nowblock.i);
+			xuanran(nowpieces,1);
+
+			document.onkeydown=pinyi;
+			move();
+			starttime=new Date();
+			gametime=setInterval(time,500);
+
+			var btn=document.getElementsByTagName("button")[0];
+			btn.onclick=function(){
+				if(this.textContent=="暂停"){
+					this.textContent="继续";
+					clearInterval(gametime);
+					clearTimeout(timer);
+					document.onkeydown=null;
+				}else{
+					this.textContent="暂停";
+					gametime=setInterval(time,500);
+					move();
+					document.onkeydown=pinyi;
+				}
+			}
+		}
+
+		function time(){
+			var nowtime=new Date();
+			var time=(nowtime.getTime()-starttime.getTime())/1000;
+			var h=Math.floor(time/3600);
+			var m=Math.floor(time%3600/60);
+			var s=Math.floor(time%3600%60);
+			h=h<10?"0"+h:h;
+			m=m<10?"0"+m:m;
+			s=s<10?"0"+s:s;
+			document.getElementById("time").innerHTML=h+":"+m+":"+s;
+		}
+
+		//获得形状
+		function suiji(x,y,color){
+			if(!_i&&_i!=0) _i=random(7);
+			switch (_i){
+				case 0:
+					var obj=new one(x,y,color);
+					return obj;
+				case 1:
+					var obj=new two(x,y,color);
+					return obj;
+				case 2:
+					var obj=new three(x,y,color);
+					return obj;
+				case 3:
+					var obj=new four(x,y,color);
+					return obj;
+				case 4:
+					var obj=new five(x,y,color);
+					return obj;
+				case 5:
+					var obj=new six(x,y,color);
+					return obj;
+				case 6:
+					var obj=new seven(x,y,color);
+					return obj;
+			}
+		}
+
+		//上下左右事件响应
+		function pinyi(event){
+			var e=event||window.event;
+			if(event.keyCode==37){
+				for(var i=0;i<nowpieces.length;i++){
+					if(nowpieces[i].x<=0||nowpieces[i].y>line-1) return;
+					var k=nowpieces[i].x+nowpieces[i].y*column;
+					if(all[k]!=0) return;
+				}
+				x--;
+				var d=ceshi();
+				if(d){
+					x++;
+					return;
+				}
+				xuanran(nowpieces,0);
+				nowblock=suiji(x,y,color);
+				nowpieces=nowblock.change(nowblock.i);
+				xuanran(nowpieces,1);
+			}else if(event.keyCode==39){
+				for(var i=0;i<nowpieces.length;i++){
+					if(nowpieces[i].x>=column-1||nowpieces[i].y>line-1) return;
+					var k=nowpieces[i].x+nowpieces[i].y*column;
+					if(all[k]!=0) return;
+				}
+				x++;
+				var d=ceshi();
+				if(d){
+					x--;
+					return;
+				}
+				xuanran(nowpieces,0);
+				nowblock=suiji(x,y,color);
+				nowpieces=nowblock.change(nowblock.i);
+				xuanran(nowpieces,1);
+			}else if(event.keyCode==40){
+				for(var i=0;i<nowpieces.length;i++){
+					if(nowpieces[i].y>=line-1) return;
+					var k=nowpieces[i].x+nowpieces[i].y*column;
+					if(all[k]!=0) return;
+				}
+				y++;
+				var d=ceshi();
+				if(d){
+					y--;
+					return;
+				}
+				xuanran(nowpieces,0);
+				nowblock=suiji(x,y,color);
+				nowpieces=nowblock.change(nowblock.i);
+				xuanran(nowpieces,1);	
+			}else if(event.keyCode==38){
+				for(var i=0;i<nowpieces.length;i++){
+					if(nowpieces[i].y<0) continue;
+					if(nowpieces[i].y>line-1) return;
+					var k=nowpieces[i].x+nowpieces[i].y*column;
+					if(all[k]!=0) return;
+				}
+				var _index=index;
+				xuanran(nowpieces,0);
+				nowblock=suiji(x,y,color);
+				nowpieces=nowblock.change(nowblock.i,1);
+				var k=0;
+				for(var i=0;i<nowpieces.length;i++){
+					if(nowpieces[i].x<0){
+						var j=-nowpieces[i].x;
+						k=k<j?j:k;	
+						
+					}else if(nowpieces[i].x>column-1){
+						var j=column-1-nowpieces[i].x;
+						k=k>j?j:k;
+					}
+				}
+				x+=k;
+				var d=ceshi();
+				if(d){
+					x-=k;
+					index=_index;
+					nowblock=suiji(x,y,color);
+					nowpieces=nowblock.change(nowblock.i);
+					xuanran(nowpieces,1);
+					return; 
+				}
+				index=_index;
+				nowblock=suiji(x,y,color);
+				nowpieces=nowblock.change(nowblock.i,1);
+				xuanran(nowpieces,1);
+			}
+		}
+
+		//碰撞检测
+		function ceshi(){
+			var	nowblock=suiji(x,y,color);
+			
+			var	nowpieces=nowblock.change(nowblock.i);
+			for(var i=0;i<nowpieces.length;i++){
+				if(nowpieces[i].y<0) continue;
+				var d=nowpieces[i].x+nowpieces[i].y*column;
+				if(all[d]!=0) return true;
+			}
+			return false;
+		}
+
+		//下落判定
+		function move(){
+			timer=setTimeout(function(){
+				y++;
+				var d=ceshi();
+				if(y>line-1||d){
+					for(var _xx=0;_xx<column;_xx++){
+						if(all[_xx]==1){
+							clearInterval(gametime);
+							alert("GAME OVER!");
+							return;
+						}
+					}
+					check();
+					x=Math.floor((column-4)/2);
+					y=-1;
+					color=colors[random(colors.length)];
+					index=null;
+					_i=null;
+					nowblock=suiji(x,y,color);
+					nowpieces=nowblock.change(nowblock.i);
+				
+					move();
+					return;
+				}
+				xuanran(nowpieces,0);
+				nowblock=suiji(x,y,color);
+				nowpieces=nowblock.change(nowblock.i);
+				xuanran(nowpieces,1);
+				move();
+			},500)
+		}
+
+		//消减检测
+		function check(){
+			for(var i=0;i<nowpieces.length;i++){
+				var k=nowpieces[i].x+nowpieces[i].y*column;
+					all[k]=1;
+				}
+			allpie.push(nowpieces);
+					
+			var dele=[];
+			var h=0;
+			for(var j=line-1;j>=0;j--){
+				for(var g=0;g<column;g++){
+					if(all[g+j*column]!=0) h++;
+				}
+				if(h==column) dele.push(j);
+				h=0;
+			}
+				
+			for(var p=0;p<dele.length;p++){
+				for(var l=dele[p]*column;l<dele[p]*column+column;l++){	
+					all[l]=0;
+					for(var e=0;e<allpie.length;e++){
+						for(var f=0;f<allpie[e].length;f++){
+							var n=allpie[e][f].x+allpie[e][f].y*column;
+							if(n==l){
+								allpie[e].splice(f,1); 
+								f--;
+							}
+						}
+						if(allpie[e].length==0) {
+							allpie.splice(e,1);
+							e--;
+						}
+					}
+					lists[l].style.backgroundColor="#0e0e0e";
+				}
+			}
+					
+			while(dele.length!=0){
+				defeng+=100*dele.length;
+				document.getElementById("defen").innerHTML=defeng;
+				for(var q=0;q<allpie.length;q++){
+					var _x=[];
+					var _a=[];
+					var _r=0;
+					for(var u=0;u<allpie[q].length;u++){
+						var _bl=true;
+						var _xl=true;					
+						if(allpie[q][u].y>dele[0]) _xl=false;
+						var t=allpie[q][u].y*column+allpie[q][u].x;
+						var _t=t;
+						if(allpie[q][u].y<dele[0]&&allpie[q][u].y>dele[1]) _r=1;
+						for(var _y=0;_y<allpie[q].length;_y++){
+							if(_y==u) continue;
+							_a.push(allpie[q][_y].y*column+allpie[q][_y].x);
+						}
+						for(var _o=0;_o<_a.length;_o++){
+							if(t+column==_a[_o]) _bl=false;
+						}
+						while(all[t+column]==0&&_bl&&_xl){
+							t+=column;
+						}
+						_t=(_t==t)?0:(t-_t)/column;
+						if(_r){
+							_r=_t;
+							continue;
+						} 
+						if(_bl&&_xl) _x.push(_t);
+					}
+							
+					if(_x.length!=0){
+						var _n=Math.min.apply(null,_x);
+						for(var m=0;m<allpie[q].length;m++){
+							if(allpie[q][m].y<dele[0]&&allpie[q][m].y>dele[1]){
+								var v=allpie[q][m].y*column+allpie[q][m].x;
+								all[v]=0;
+								allpie[q][m].y+=_r;
+								var _v=allpie[q][m].y*column+allpie[q][m].x;
+								all[_v]=1;
+								continue;
+							}
+							var _pl=true;
+							if(allpie[q][m].y>dele[0]) _pl=false;
+							if(_pl){
+								var v=allpie[q][m].y*column+allpie[q][m].x;
+								all[v]=0;
+								allpie[q][m].y+=(_n+_r);
+								var _v=allpie[q][m].y*column+allpie[q][m].x;
+								all[_v]=1;
+							}
+						}
+					}
+				}
+
+				setTimeout(function(){
+					for(var i=0;i<lists.length;i++){
+						lists[i].style.backgroundColor="#0e0e0e";
+					}
+					for(var b=0;b<allpie.length;b++){
+						for(var _b=0;_b<allpie[b].length;_b++){
+							var _w=allpie[b][_b].x+allpie[b][_b].y*column;
+							lists[_w].style.backgroundColor=allpie[b][_b].color;
+						}
+					}
+					
+				},500)
+				
+
+				var dele=[];
+				var h=0;
+				for(var j=line-1;j>=0;j--){
+					for(var g=0;g<column;g++){
+						if(all[g+j*column]!=0) h++;
+					}
+					if(h==column) dele.push(j);
+					h=0;
+				}
+					
+				for(var p=0;p<dele.length;p++){
+					for(var l=dele[p]*column;l<dele[p]*column+column;l++){	
+						all[l]=0;
+						for(var e=0;e<allpie.length;e++){
+							for(var f=0;f<allpie[e].length;f++){
+								var n=allpie[e][f].x+allpie[e][f].y*column;
+								if(n==l){
+									allpie[e].splice(f,1); 
+									f--;
+								}
+							}
+							if(allpie[e].length==0) {
+								allpie.splice(e,1);
+								e--;
+							}
+						}
+						lists[l].style.backgroundColor="#0e0e0e";
+					}
+				}
+			}
+				
+		}
+
+		//渲染方块
+		function xuanran(arr,k){
+			for(var i=0;i<arr.length;i++){
+				if(arr[i].y<0) continue;
+				var index=arr[i].x+arr[i].y*column;
+				if(k){
+					lists[index].style.backgroundColor=arr[i].color;
+				}else{
+					lists[index].style.backgroundColor="#0e0e0e";
+				}
+			}
+		}
+
+		function random(num){
+			return Math.floor(Math.random()*num);
+		}
+
+		//改变形状
+		function change(i,k){
+			if(!index&&index!=0){
+					index=random(i);
+				}else if(k){
+					index++;
+					
+					index=index>(i-1)?0:index;
+				}
+			switch (i){
+				case 1:
+					var arr=[this.a];
+					break;
+				case 2:
+					var arr=[this.a,this.b];
+					break;
+				case 3:
+					var arr=[this.a,this.b,this.c];
+					break;
+				case 4:
+					var arr=[this.a,this.b,this.c,this.d];
+					break;
+			}
+			return arr[index];
+		}
+
+		function one(x,y,color){
+			this.i=2;
+			this.a=[{x:x+2,y:y,color:color},{x:x+2,y:y-1,color:color},{x:x+2,y:y-2,color:color},{x:x+2,y:y-3,color:color}];
+			this.b=[{x:x,y:y,color:color},{x:x+1,y:y,color:color},{x:x+2,y:y,color:color},{x:x+3,y:y,color:color}];
+			this.change=change;
+		}
+		function two(x,y,color){
+			this.i=1;
+			this.a=[{x:x+1,y:y,color:color},{x:x+2,y:y,color:color},{x:x+1,y:y-1,color:color},{x:x+2,y:y-1,color:color}];
+			this.change=change;
+		}
+		function three(x,y,color){
+			this.i=4;
+			this.a=[{x:x+1,y:y,color:color},{x:x+2,y:y,color:color},{x:x+3,y:y,color:color},{x:x+2,y:y-1,color:color}];
+			this.b=[{x:x+2,y:y,color:color},{x:x+2,y:y-1,color:color},{x:x+2,y:y-2,color:color},{x:x+3,y:y-1,color:color}];
+			this.c=[{x:x+2,y:y,color:color},{x:x+1,y:y-1,color:color},{x:x+2,y:y-1,color:color},{x:x+3,y:y-1,color:color}];
+			this.d=[{x:x+1,y:y-1,color:color},{x:x+2,y:y,color:color},{x:x+2,y:y-1,color:color},{x:x+2,y:y-2,color:color}];
+			this.change=change;
+		}
+		function four(x,y,color){
+			this.i=4;
+			this.a=[{x:x+1,y:y,color:color},{x:x+1,y:y-1,color:color},{x:x+1,y:y-2,color:color},{x:x+2,y:y,color:color}];
+			this.b=[{x:x+1,y:y,color:color},{x:x+1,y:y-1,color:color},{x:x+2,y:y-1,color:color},{x:x+3,y:y-1,color:color}];
+			this.c=[{x:x+1,y:y-2,color:color},{x:x+2,y:y,color:color},{x:x+2,y:y-1,color:color},{x:x+2,y:y-2,color:color}];
+			this.d=[{x:x,y:y,color:color},{x:x+1,y:y,color:color},{x:x+2,y:y,color:color},{x:x+2,y:y-1,color:color}];
+			this.change=change;
+		}
+		function five(x,y,color){
+			this.i=4;
+			this.a=[{x:x+1,y:y,color:color},{x:x+2,y:y,color:color},{x:x+2,y:y-1,color:color},{x:x+2,y:y-2,color:color}];
+			this.b=[{x:x+1,y:y,color:color},{x:x+1,y:y-1,color:color},{x:x+2,y:y,color:color},{x:x+3,y:y,color:color}];
+			this.c=[{x:x+1,y:y,color:color},{x:x+1,y:y-1,color:color},{x:x+1,y:y-2,color:color},{x:x+2,y:y-2,color:color}];
+			this.d=[{x:x,y:y-1,color:color},{x:x+1,y:y-1,color:color},{x:x+2,y:y-1,color:color},{x:x+2,y:y,color:color}];
+			this.change=change;
+		}
+		function six(x,y,color){
+			this.i=2;
+			this.a=[{x:x+1,y:y-1,color:color},{x:x+2,y:y-1,color:color},{x:x+2,y:y,color:color},{x:x+3,y:y,color:color}];
+			this.b=[{x:x+1,y:y,color:color},{x:x+1,y:y-1,color:color},{x:x+2,y:y-1,color:color},{x:x+2,y:y-2,color:color}];
+			this.change=change;
+		}
+		function seven(x,y,color){
+			this.i=2;
+			this.a=[{x:x+1,y:y,color:color},{x:x+2,y:y,color:color},{x:x+2,y:y-1,color:color},{x:x+3,y:y-1,color:color}];
+			this.b=[{x:x+1,y:y-1,color:color},{x:x+1,y:y-2,color:color},{x:x+2,y:y-1,color:color},{x:x+2,y:y,color:color}];
+			this.change=change;
+		}
+	</script>
+</head>
+<body>
+<ul id="wrap"></ul>
+<div>
+	游戏得分<span id="defen">0</span>
+	游戏时间<span id="time">00:00:00</span>
+	<button>暂停</button>
+</div>
+</body>
+</html>
