@@ -148,7 +148,7 @@
 			}
 		}
 
-		//上下左右事件响应
+		//移动事件响应
 		function pinyi(event){
 			var e=event||window.event;
 			if(event.keyCode==37){
@@ -251,7 +251,7 @@
 			return false;
 		}
 
-		//下落判定
+		//下落及消减判定
 		function move(){
 			timer=setTimeout(function(){
 				y++;
@@ -264,7 +264,141 @@
 							return;
 						}
 					}
-					check();
+					for(var i=0;i<nowpieces.length;i++){
+						var k=nowpieces[i].x+nowpieces[i].y*column;
+						all[k]=1;
+					}
+					allpie.push(nowpieces);
+					
+					var dele=[];
+					var h=0;
+					for(var j=line-1;j>=0;j--){
+						for(var g=0;g<column;g++){
+							if(all[g+j*column]!=0) h++;
+						}
+						if(h==column) dele.push(j);
+						h=0;
+					}
+				
+					for(var p=0;p<dele.length;p++){
+						for(var l=dele[p]*column;l<dele[p]*column+column;l++){	
+							all[l]=0;
+							for(var e=0;e<allpie.length;e++){
+								for(var f=0;f<allpie[e].length;f++){
+									var n=allpie[e][f].x+allpie[e][f].y*column;
+									if(n==l){
+										allpie[e].splice(f,1); 
+										f--;
+									}
+								}
+								if(allpie[e].length==0) {
+									allpie.splice(e,1);
+									e--;
+								}
+							}
+							lists[l].style.backgroundColor="#0e0e0e";
+						}
+					}
+					
+					while(dele.length!=0){
+						defeng+=100*dele.length;
+						document.getElementById("defen").innerHTML=defeng;
+						for(var q=0;q<allpie.length;q++){
+							var _x=[];
+							var _a=[];
+							var _r=0;
+							for(var u=0;u<allpie[q].length;u++){
+								var _bl=true;
+								var _xl=true;
+								
+								if(allpie[q][u].y>dele[0]) _xl=false;
+
+								var t=allpie[q][u].y*column+allpie[q][u].x;
+								var _t=t;
+								if(allpie[q][u].y<dele[0]&&allpie[q][u].y>dele[1]) _r=1;
+								for(var _y=0;_y<allpie[q].length;_y++){
+									if(_y==u) continue;
+									_a.push(allpie[q][_y].y*column+allpie[q][_y].x);
+								}
+								for(var _o=0;_o<_a.length;_o++){
+									if(t+column==_a[_o]) _bl=false;
+								}
+								while(all[t+column]==0&&_bl&&_xl){
+									t+=column;
+								}
+								_t=(_t==t)?0:(t-_t)/column;
+								if(_r){
+									_r=_t;
+									continue;
+								} 
+								if(_bl&&_xl) _x.push(_t);
+							}
+							
+							if(_x.length!=0){
+								var _n=Math.min.apply(null,_x);
+								for(var m=0;m<allpie[q].length;m++){
+									if(allpie[q][m].y<dele[0]&&allpie[q][m].y>dele[1]){
+										var v=allpie[q][m].y*column+allpie[q][m].x;
+										all[v]=0;
+										allpie[q][m].y+=_r;
+										var _v=allpie[q][m].y*column+allpie[q][m].x;
+										all[_v]=1;
+										continue;
+									}
+									var _pl=true;
+									if(allpie[q][m].y>dele[0]) _pl=false;
+									if(_pl){
+										var v=allpie[q][m].y*column+allpie[q][m].x;
+										all[v]=0;
+										allpie[q][m].y+=(_n+_r);
+										var _v=allpie[q][m].y*column+allpie[q][m].x;
+										all[_v]=1;
+									}
+								}
+							}
+						}
+
+						for(var i=0;i<lists.length;i++){
+							lists[i].style.backgroundColor="#0e0e0e";
+						}
+						for(var b=0;b<allpie.length;b++){
+							for(var _b=0;_b<allpie[b].length;_b++){
+								var _w=allpie[b][_b].x+allpie[b][_b].y*column;
+								lists[_w].style.backgroundColor=allpie[b][_b].color;
+							}
+						}
+
+						var dele=[];
+						var h=0;
+						for(var j=line-1;j>=0;j--){
+							for(var g=0;g<column;g++){
+								if(all[g+j*column]!=0) h++;
+							}
+							if(h==column) dele.push(j);
+							h=0;
+						}
+					
+						for(var p=0;p<dele.length;p++){
+							for(var l=dele[p]*column;l<dele[p]*column+column;l++){	
+								all[l]=0;
+								for(var e=0;e<allpie.length;e++){
+									for(var f=0;f<allpie[e].length;f++){
+										var n=allpie[e][f].x+allpie[e][f].y*column;
+										if(n==l){
+											allpie[e].splice(f,1); 
+											f--;
+										}
+									}
+									if(allpie[e].length==0) {
+										allpie.splice(e,1);
+										e--;
+									}
+								}
+								lists[l].style.backgroundColor="#0e0e0e";
+							}
+						}
+					}
+				
 					x=Math.floor((column-4)/2);
 					y=-1;
 					color=colors[random(colors.length)];
@@ -282,147 +416,6 @@
 				xuanran(nowpieces,1);
 				move();
 			},500)
-		}
-
-		//消减检测
-		function check(){
-			for(var i=0;i<nowpieces.length;i++){
-				var k=nowpieces[i].x+nowpieces[i].y*column;
-					all[k]=1;
-				}
-			allpie.push(nowpieces);
-					
-			var dele=[];
-			var h=0;
-			for(var j=line-1;j>=0;j--){
-				for(var g=0;g<column;g++){
-					if(all[g+j*column]!=0) h++;
-				}
-				if(h==column) dele.push(j);
-				h=0;
-			}
-				
-			for(var p=0;p<dele.length;p++){
-				for(var l=dele[p]*column;l<dele[p]*column+column;l++){	
-					all[l]=0;
-					for(var e=0;e<allpie.length;e++){
-						for(var f=0;f<allpie[e].length;f++){
-							var n=allpie[e][f].x+allpie[e][f].y*column;
-							if(n==l){
-								allpie[e].splice(f,1); 
-								f--;
-							}
-						}
-						if(allpie[e].length==0) {
-							allpie.splice(e,1);
-							e--;
-						}
-					}
-					lists[l].style.backgroundColor="#0e0e0e";
-				}
-			}
-					
-			while(dele.length!=0){
-				defeng+=100*dele.length;
-				document.getElementById("defen").innerHTML=defeng;
-				for(var q=0;q<allpie.length;q++){
-					var _x=[];
-					var _a=[];
-					var _r=0;
-					for(var u=0;u<allpie[q].length;u++){
-						var _bl=true;
-						var _xl=true;					
-						if(allpie[q][u].y>dele[0]) _xl=false;
-						var t=allpie[q][u].y*column+allpie[q][u].x;
-						var _t=t;
-						if(allpie[q][u].y<dele[0]&&allpie[q][u].y>dele[1]) _r=1;
-						for(var _y=0;_y<allpie[q].length;_y++){
-							if(_y==u) continue;
-							_a.push(allpie[q][_y].y*column+allpie[q][_y].x);
-						}
-						for(var _o=0;_o<_a.length;_o++){
-							if(t+column==_a[_o]) _bl=false;
-						}
-						while(all[t+column]==0&&_bl&&_xl){
-							t+=column;
-						}
-						_t=(_t==t)?0:(t-_t)/column;
-						if(_r){
-							_r=_t;
-							continue;
-						} 
-						if(_bl&&_xl) _x.push(_t);
-					}
-							
-					if(_x.length!=0){
-						var _n=Math.min.apply(null,_x);
-						for(var m=0;m<allpie[q].length;m++){
-							if(allpie[q][m].y<dele[0]&&allpie[q][m].y>dele[1]){
-								var v=allpie[q][m].y*column+allpie[q][m].x;
-								all[v]=0;
-								allpie[q][m].y+=_r;
-								var _v=allpie[q][m].y*column+allpie[q][m].x;
-								all[_v]=1;
-								continue;
-							}
-							var _pl=true;
-							if(allpie[q][m].y>dele[0]) _pl=false;
-							if(_pl){
-								var v=allpie[q][m].y*column+allpie[q][m].x;
-								all[v]=0;
-								allpie[q][m].y+=(_n+_r);
-								var _v=allpie[q][m].y*column+allpie[q][m].x;
-								all[_v]=1;
-							}
-						}
-					}
-				}
-
-				setTimeout(function(){
-					for(var i=0;i<lists.length;i++){
-						lists[i].style.backgroundColor="#0e0e0e";
-					}
-					for(var b=0;b<allpie.length;b++){
-						for(var _b=0;_b<allpie[b].length;_b++){
-							var _w=allpie[b][_b].x+allpie[b][_b].y*column;
-							lists[_w].style.backgroundColor=allpie[b][_b].color;
-						}
-					}
-					
-				},500)
-				
-
-				var dele=[];
-				var h=0;
-				for(var j=line-1;j>=0;j--){
-					for(var g=0;g<column;g++){
-						if(all[g+j*column]!=0) h++;
-					}
-					if(h==column) dele.push(j);
-					h=0;
-				}
-					
-				for(var p=0;p<dele.length;p++){
-					for(var l=dele[p]*column;l<dele[p]*column+column;l++){	
-						all[l]=0;
-						for(var e=0;e<allpie.length;e++){
-							for(var f=0;f<allpie[e].length;f++){
-								var n=allpie[e][f].x+allpie[e][f].y*column;
-								if(n==l){
-									allpie[e].splice(f,1); 
-									f--;
-								}
-							}
-							if(allpie[e].length==0) {
-								allpie.splice(e,1);
-								e--;
-							}
-						}
-						lists[l].style.backgroundColor="#0e0e0e";
-					}
-				}
-			}
-				
 		}
 
 		//渲染方块
